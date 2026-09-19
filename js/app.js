@@ -984,7 +984,7 @@ class SurveyApp {
         }
     }
 
-    generatePDF(printOption) {
+generatePDF(printOption) {
         try {
             // Get the content - NO FOOTER in content
             const content = document.getElementById('printContent');
@@ -993,151 +993,158 @@ class SurveyApp {
                 return;
             }
 
-            // Create a new window for printing
-            const printWindow = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
-            if (!printWindow) {
-                this.showMessage('Error', 'Please allow popups for this website.', 'error');
-                return;
-            }
-
             const currentDate = new Date().toLocaleString();
 
-            // Build the print document - ONLY ONE FOOTER at the end
-            const html = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <title></title>
-                    <style>
-                        * { margin: 0; padding: 0; box-sizing: border-box; }
-                        body {
-                            font-family: Arial, Helvetica, sans-serif;
-                            padding: 30px;
-                            background: white;
-                            font-size: 12px;
-                        }
-                        #printContent { max-width: 100%; }
-                        h2 {
-                            color: #0d6efd;
-                            font-weight: 700;
-                            text-align: center;
-                            margin: 4px 0 10px 0;
-                        }
-                        h4 { color: #6c757d; text-align: center; margin: 5px 0 15px 0; }
-                        hr {
-                            border: 1px solid #0d6efd;
-                            margin: 15px 0;
-                            clear: both;
-                        }
-                        table {
-                            width: 100%;
-                            border-collapse: collapse;
-                            margin: 10px 0;
-                            font-size: 10px;
-                        }
-                        table th {
-                            background-color: #0d6efd;
-                            color: white;
-                            padding: 6px 8px;
-                            border: 1px solid #0d6efd;
-                            text-align: center;
-                            font-weight: 600;
-                        }
-                        table td {
-                            padding: 5px 8px;
-                            border: 1px solid #dee2e6;
-                            text-align: center;
-                        }
-                        table tr:nth-child(even) { background-color: #f8f9fa; }
-                        .beacon-info {
-                            font-size: 11px;
-                            margin: 10px 0;
-                            display: flex;
-                            flex-wrap: wrap;
-                            justify-content: space-between;
-                        }
-						.section {
-                            margin-bottom: 25px;
-                            page-break-inside: auto; /* allow long tables to flow onto later pages */
-                        }
-                        /* Long tables (e.g. Beacon Index) start on page 1 and
-                           continue across pages instead of jumping whole to page 2 */
-                        table {
-                            page-break-inside: auto;
-                        }
-                        thead {
-                            display: table-header-group; /* repeat column headers on each page */
-                        }
-                        tr, td, th {
-                            page-break-inside: avoid;    /* never split a single row across a page */
-                        }
-                        .area-table {
-                            width: 60%;
-                            margin: 15px auto;
-                            font-size: 13px;
-                        }
-                        .area-table td {
-                            padding: 10px 15px;
-                            text-align: left;
-                        }
-                        .area-table td:last-child {
-                            text-align: right;
-                            font-weight: 600;
-                        }
-                        .area-table tr:first-child td { background-color: #f8f9fa; }
-                        .text-center { text-align: center; }
-                        .text-right { text-align: right; }
-                        .text-left { text-align: left; }
-                        .fw-bold { font-weight: 600; }
-                        .mt-2 { margin-top: 20px; }
-                        .mb-2 { margin-bottom: 20px; }
-                        .color-blue { color: #0d6efd; }
-                        .color-green { color: #198754; }
-                        .color-red { color: #dc3545; }
+            // Remove any previous print iframe
+            const oldFrame = document.getElementById('printFrame');
+            if (oldFrame) oldFrame.remove();
 
-                        /* Footer - ONLY ONE at the end */
-                        .footer {
-                            text-align: center;
-                            margin-top: 30px;
-                            font-size: 9px;
-                            color: #6c757d;
-                            border-top: 1px solid #dee2e6;
-                            padding-top: 10px;
-                            page-break-after: avoid;
-                            page-break-inside: avoid;
-                        }
+            // Create a hidden iframe for printing (works on Android + desktop)
+            const iframe = document.createElement('iframe');
+            iframe.id = 'printFrame';
+            iframe.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; border:none;';
+            document.body.appendChild(iframe);
 
-                        @page {
-                            margin-top: 0;
-                            margin-bottom: 15mm;
-                            margin-left: 15mm;
-                            margin-right: 15mm;
-                        }
-                        @media print {
-                            body { padding-top: 10mm; }
-                            -webkit-print-color-adjust: exact;
-                        }
-                    </style>
-                </head>
-                <body>
-                    ${content.innerHTML}
-                    <!-- SINGLE FOOTER - Only at the end -->
-                    <div class="footer">
-                        <p>Generated on: ${currentDate} | Coordinate System: EPSG:2136 - Accra Ghana National Grid</p>
-                    </div>
-                    <script>
-                        window.onload = function() {
-                            setTimeout(function() {
-                                window.print();
-                            }, 1500);
-                        };
-                    <\/script>
-                </body>
-                </html>
-            `;
+            const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-            printWindow.document.write(html);
-            printWindow.document.close();
+            doc.open();
+            doc.write(`<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: Arial, Helvetica, sans-serif;
+            padding: 30px;
+            background: white;
+            font-size: 12px;
+        }
+        #printContent { max-width: 100%; }
+        h2 {
+            color: #0d6efd;
+            font-weight: 700;
+            text-align: center;
+            margin: 4px 0 10px 0;
+        }
+        h4 { color: #6c757d; text-align: center; margin: 5px 0 15px 0; }
+        hr {
+            border: 1px solid #0d6efd;
+            margin: 15px 0;
+            clear: both;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 10px 0;
+            font-size: 10px;
+        }
+        table th {
+            background-color: #0d6efd;
+            color: white;
+            padding: 6px 8px;
+            border: 1px solid #0d6efd;
+            text-align: center;
+            font-weight: 600;
+        }
+        table td {
+            padding: 5px 8px;
+            border: 1px solid #dee2e6;
+            text-align: center;
+        }
+        table tr:nth-child(even) { background-color: #f8f9fa; }
+        .beacon-info {
+            font-size: 11px;
+            margin: 10px 0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+        .section {
+            margin-bottom: 25px;
+            page-break-inside: auto;
+        }
+        table { page-break-inside: auto; }
+        thead { display: table-header-group; }
+        tr, td, th { page-break-inside: avoid; }
+        .area-table {
+            width: 60%;
+            margin: 15px auto;
+            font-size: 13px;
+        }
+        .area-table td {
+            padding: 10px 15px;
+            text-align: left;
+        }
+        .area-table td:last-child {
+            text-align: right;
+            font-weight: 600;
+        }
+        .area-table tr:first-child td { background-color: #f8f9fa; }
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .text-left { text-align: left; }
+        .fw-bold { font-weight: 600; }
+        .mt-2 { margin-top: 20px; }
+        .mb-2 { margin-bottom: 20px; }
+        .color-blue { color: #0d6efd; }
+        .color-green { color: #198754; }
+        .color-red { color: #dc3545; }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 9px;
+            color: #6c757d;
+            border-top: 1px solid #dee2e6;
+            padding-top: 10px;
+            page-break-after: avoid;
+            page-break-inside: avoid;
+        }
+
+        @page {
+            margin-top: 0;
+            margin-bottom: 15mm;
+            margin-left: 15mm;
+            margin-right: 15mm;
+        }
+        @media print {
+            body { padding-top: 10mm; }
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+    </style>
+</head>
+<body>
+    ${content.innerHTML}
+    <div class="footer">
+        <p>Generated on: ${currentDate} | Coordinate System: EPSG:2136 - Accra Ghana National Grid</p>
+    </div>
+</body>
+</html>`);
+            doc.close();
+
+            // Wait for iframe content (images, layout) to settle, then print
+            const printFrame = iframe;
+            const printWin = iframe.contentWindow;
+
+            const doPrint = function () {
+                try {
+                    printWin.focus();
+                    printWin.print();
+                } catch (e) {
+                    // Fallback: some Android WebViews require the iframe itself
+                    try {
+                        printFrame.contentWindow.focus();
+                        printFrame.contentWindow.print();
+                    } catch (e2) {
+                        console.error('Print failed on both attempts:', e2);
+                    }
+                }
+            };
+
+            // Allow images (logo) and layout to render before triggering print
+            setTimeout(doPrint, 1500);
 
             // Close the preview modal
             const modal = bootstrap.Modal.getInstance(document.getElementById('printPreviewModal'));
@@ -1145,11 +1152,11 @@ class SurveyApp {
                 modal.hide();
             }
 
-            this.showMessage('PDF Generated', 'PDF is being generated. Please save when prompted.', 'success');
+            this.showMessage('Print Ready', 'The print dialog is being prepared. If it does not appear, try using your browser menu to print.', 'success');
 
         } catch (error) {
             console.error('Error:', error);
-            this.showMessage('Error', 'Error generating PDF. Please try again.', 'error');
+            this.showMessage('Error', 'Error generating print. Please try again.', 'error');
         }
     }
 
