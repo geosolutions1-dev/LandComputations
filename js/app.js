@@ -986,180 +986,93 @@ class SurveyApp {
 
 generatePDF(printOption) {
         try {
-            // Get the content - NO FOOTER in content
             const content = document.getElementById('printContent');
             if (!content) {
                 this.showMessage('Error', 'Content not found. Please try again.', 'error');
                 return;
             }
 
+            // Make sure the required libraries are available
+            if (!window.jspdf || !window.jspdf.jsPDF || typeof window.html2canvas !== 'function') {
+                this.showMessage('Error', 'PDF libraries did not load. Please check your internet connection and reload.', 'error');
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
             const currentDate = new Date().toLocaleString();
 
-            // Remove any previous print iframe
-            const oldFrame = document.getElementById('printFrame');
-            if (oldFrame) oldFrame.remove();
+            // Build an off-screen container holding the report + single footer.
+            // The report content already uses inline styles, so it renders
+            // correctly without the external stylesheet.
+            const wrapper = document.createElement('div');
+            wrapper.style.cssText = 'position:fixed; left:-9999px; top:0; width:794px; background:#ffffff; padding:30px; font-family:Arial,Helvetica,sans-serif; font-size:12px; box-sizing:border-box;';
+            wrapper.innerHTML = content.innerHTML +
+                '<div style="text-align:center; margin-top:30px; font-size:9px; color:#6c757d; border-top:1px solid #dee2e6; padding-top:10px;">' +
+                '<p>Generated on: ' + currentDate + ' | Coordinate System: EPSG:2136 - Accra Ghana National Grid</p>' +
+                '</div>';
+            document.body.appendChild(wrapper);
 
-            // Create a hidden iframe for printing (works on Android + desktop)
-            const iframe = document.createElement('iframe');
-            iframe.id = 'printFrame';
-            iframe.style.cssText = 'position:fixed; left:-9999px; top:-9999px; width:1px; height:1px; border:none;';
-            document.body.appendChild(iframe);
-
-            const doc = iframe.contentDocument || iframe.contentWindow.document;
-
-            doc.open();
-            doc.write(`<!DOCTYPE html>
-<html>
-<head>
-    <title></title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            padding: 30px;
-            background: white;
-            font-size: 12px;
-        }
-        #printContent { max-width: 100%; }
-        h2 {
-            color: #0d6efd;
-            font-weight: 700;
-            text-align: center;
-            margin: 4px 0 10px 0;
-        }
-        h4 { color: #6c757d; text-align: center; margin: 5px 0 15px 0; }
-        hr {
-            border: 1px solid #0d6efd;
-            margin: 15px 0;
-            clear: both;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 10px 0;
-            font-size: 10px;
-        }
-        table th {
-            background-color: #0d6efd;
-            color: white;
-            padding: 6px 8px;
-            border: 1px solid #0d6efd;
-            text-align: center;
-            font-weight: 600;
-        }
-        table td {
-            padding: 5px 8px;
-            border: 1px solid #dee2e6;
-            text-align: center;
-        }
-        table tr:nth-child(even) { background-color: #f8f9fa; }
-        .beacon-info {
-            font-size: 11px;
-            margin: 10px 0;
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-        .section {
-            margin-bottom: 25px;
-            page-break-inside: auto;
-        }
-        table { page-break-inside: auto; }
-        thead { display: table-header-group; }
-        tr, td, th { page-break-inside: avoid; }
-        .area-table {
-            width: 60%;
-            margin: 15px auto;
-            font-size: 13px;
-        }
-        .area-table td {
-            padding: 10px 15px;
-            text-align: left;
-        }
-        .area-table td:last-child {
-            text-align: right;
-            font-weight: 600;
-        }
-        .area-table tr:first-child td { background-color: #f8f9fa; }
-        .text-center { text-align: center; }
-        .text-right { text-align: right; }
-        .text-left { text-align: left; }
-        .fw-bold { font-weight: 600; }
-        .mt-2 { margin-top: 20px; }
-        .mb-2 { margin-bottom: 20px; }
-        .color-blue { color: #0d6efd; }
-        .color-green { color: #198754; }
-        .color-red { color: #dc3545; }
-
-        .footer {
-            text-align: center;
-            margin-top: 30px;
-            font-size: 9px;
-            color: #6c757d;
-            border-top: 1px solid #dee2e6;
-            padding-top: 10px;
-            page-break-after: avoid;
-            page-break-inside: avoid;
-        }
-
-        @page {
-            margin-top: 0;
-            margin-bottom: 15mm;
-            margin-left: 15mm;
-            margin-right: 15mm;
-        }
-        @media print {
-            body { padding-top: 10mm; }
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-        }
-    </style>
-</head>
-<body>
-    ${content.innerHTML}
-    <div class="footer">
-        <p>Generated on: ${currentDate} | Coordinate System: EPSG:2136 - Accra Ghana National Grid</p>
-    </div>
-</body>
-</html>`);
-            doc.close();
-
-            // Wait for iframe content (images, layout) to settle, then print
-            const printFrame = iframe;
-            const printWin = iframe.contentWindow;
-
-            const doPrint = function () {
-                try {
-                    printWin.focus();
-                    printWin.print();
-                } catch (e) {
-                    // Fallback: some Android WebViews require the iframe itself
-                    try {
-                        printFrame.contentWindow.focus();
-                        printFrame.contentWindow.print();
-                    } catch (e2) {
-                        console.error('Print failed on both attempts:', e2);
-                    }
+            const cleanup = () => {
+                if (wrapper && wrapper.parentNode) {
+                    wrapper.parentNode.removeChild(wrapper);
                 }
             };
 
-            // Allow images (logo) and layout to render before triggering print
-            setTimeout(doPrint, 1500);
+            const fileName = 'survey_' + (printOption || 'report') + '_' +
+                new Date().toISOString().split('T')[0] + '.pdf';
 
-            // Close the preview modal
-            const modal = bootstrap.Modal.getInstance(document.getElementById('printPreviewModal'));
-            if (modal) {
-                modal.hide();
-            }
+            // Let the logo image load, then render to canvas -> PDF
+            window.html2canvas(wrapper, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: '#ffffff',
+                logging: false
+            }).then((canvas) => {
+                const imgData = canvas.toDataURL('image/png');
+                const pdf = new jsPDF('p', 'mm', 'a4');
 
-            this.showMessage('Print Ready', 'The print dialog is being prepared. If it does not appear, try using your browser menu to print.', 'success');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+                const margin = 10;
+                const imgWidth = pageWidth - margin * 2;
+                const imgHeight = canvas.height * imgWidth / canvas.width;
+                const usableHeight = pageHeight - margin * 2;
+
+                // First page
+                let heightLeft = imgHeight;
+                let position = margin;
+                pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                heightLeft -= usableHeight;
+
+                // Additional pages for long tables (Beacon Index with many points)
+                while (heightLeft > 0) {
+                    position = margin - (imgHeight - heightLeft);
+                    pdf.addPage();
+                    pdf.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+                    heightLeft -= usableHeight;
+                }
+
+                pdf.save(fileName);
+                cleanup();
+
+                const modalEl = document.getElementById('printPreviewModal');
+                const modal = modalEl ? bootstrap.Modal.getInstance(modalEl) : null;
+                if (modal) {
+                    modal.hide();
+                }
+
+                this.showMessage('PDF Downloaded', 'Your PDF has been generated. Check your device\'s Downloads folder.', 'success');
+            }).catch((err) => {
+                console.error('PDF generation error:', err);
+                cleanup();
+                this.showMessage('Error', 'Could not generate the PDF. Please try again.', 'error');
+            });
 
         } catch (error) {
             console.error('Error:', error);
-            this.showMessage('Error', 'Error generating print. Please try again.', 'error');
+            this.showMessage('Error', 'Error generating PDF. Please try again.', 'error');
         }
     }
-
     generateCertificate() {
         if (this.coordinates.length < 3) {
             this.showMessage('No Data', 'Please load coordinate data first.', 'warning');
