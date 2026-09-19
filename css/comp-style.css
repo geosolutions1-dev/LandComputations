@@ -1,0 +1,851 @@
+/* Global Styles */
+:root {
+    --primary-color: #0d6efd;
+    --success-color: #198754;
+    --warning-color: #ffc107;
+    --danger-color: #dc3545;
+}
+
+body {
+    background-color: #f8f9fa;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.main-content {
+    background-color: #ffffff;
+    overflow-y: auto;
+}
+
+.sidebar {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-left: 2px solid #dee2e6;
+    overflow-y: auto;
+}
+
+/* Table Styles */
+#coordinateTable, #planTable {
+    font-size: 0.9rem;
+}
+
+#coordinateTable thead th, #planTable thead th {
+    background-color: #f1f3f5;
+    color: #495057;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#coordinateTable tbody td, #planTable tbody td {
+    vertical-align: middle;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+#coordinateTable .form-control-sm {
+    font-size: 0.85rem;
+    padding: 0.2rem 0.4rem;
+    text-align: center;
+}
+
+#coordinateTable .form-control-sm:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Row highlighting */
+tr.base-station {
+    background-color: #fff3cd !important;
+    border-left: 4px solid #ffc107;
+}
+
+tr.base-station td {
+    font-weight: 600;
+}
+
+tr.parcel-point {
+    background-color: #d1ecf1 !important;
+}
+
+/* Row selection styling */
+#coordinateTable tbody tr.selected {
+    background-color: #cfe2ff !important;
+    border-left: 4px solid #0d6efd;
+}
+
+#coordinateTable tbody tr:hover {
+    cursor: pointer;
+    background-color: #e9ecef;
+}
+
+/* Plan Data Table Styling */
+#planTable thead th {
+    background-color: #198754;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    border-bottom: 2px solid #0d6efd;
+}
+
+#planTable tbody td {
+    vertical-align: middle;
+    padding: 0.5rem;
+    text-align: center;
+}
+
+#planTable tbody td:first-child {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Plan data row styling */
+.plan-base-row {
+    background-color: #fff3cd !important;
+    font-weight: 600;
+}
+
+.plan-base-row td {
+    border-top: 3px solid #ffc107;
+}
+
+.plan-parcel-row {
+    background-color: #f8f9fa;
+}
+
+.plan-parcel-row:hover {
+    background-color: #e9ecef !important;
+}
+
+.plan-closing-row {
+    background-color: #f8d7da !important;
+    font-weight: 500;
+}
+
+.plan-closing-row td {
+    border-bottom: 3px solid #dc3545;
+}
+
+/* Result Cards */
+.result-card {
+    background: white;
+    border-radius: 10px;
+    padding: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s;
+}
+
+.result-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.result-card label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.25rem;
+}
+
+.result-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--primary-color);
+}
+
+/* Sidebar Styles */
+.sidebar h4 {
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.sidebar .form-label {
+    font-size: 0.9rem;
+    color: #495057;
+}
+
+.sidebar .form-control,
+.sidebar .form-select {
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.sidebar .form-control:focus,
+.sidebar .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Select2 Customization */
+.select2-container--default .select2-selection--single {
+    border-radius: 8px !important;
+    border: 1px solid #ced4da !important;
+    height: 38px !important;
+    padding: 4px 12px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 28px !important;
+    color: #212529 !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px !important;
+}
+
+.select2-dropdown {
+    border-radius: 8px !important;
+    border: 1px solid #ced4da !important;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border-radius: 8px !important;
+    border: 1px solid #ced4da !important;
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--primary-color) !important;
+}
+
+/* Buttons */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+/* Remove Row Button */
+.remove-coord {
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.remove-coord:hover {
+    opacity: 1;
+}
+
+/* Empty state styling */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 10px;
+    color: #c8d0d8;
+}
+
+/* Row count display */
+#rowCountDisplay {
+    font-size: 0.9rem;
+    color: #6c757d;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .sidebar {
+        border-left: none;
+        border-top: 2px solid #dee2e6;
+        max-height: 400px;
+    }
+
+    #coordinateTable, #planTable {
+        font-size: 0.75rem;
+    }
+
+    .result-card h3 {
+        font-size: 1.2rem;
+    }
+}
+
+/* PRINT STYLES - CRITICAL FOR PDF */
+@media print {
+    .btn, .remove-coord, #loadCsvBtn, #computePlanBtn, #clearDataBtn, #setBaseStationBtn {
+        display: none !important;
+    }
+    .sidebar {
+        background: white !important;
+        border-left: 1px solid #dee2e6 !important;
+    }
+    .main-content {
+        background: white !important;
+    }
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+    tr.base-station {
+        background-color: #fff3cd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    tr.parcel-point {
+        background-color: #d1ecf1 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .plan-base-row {
+        background-color: #fff3cd !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .plan-closing-row {
+        background-color: #f8d7da !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+}
+
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+tr.new-row {
+    animation: fadeIn 0.3s ease-in;
+}
+
+/* Certificate Styling */
+.certificate {
+    background: white;
+    padding: 20px;
+    border: 2px solid var(--primary-color);
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.certificate h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 10px;
+}
+
+.certificate pre {
+    background-color: #f8f9fa;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 0;
+}
+
+/* Modal Styling */
+#messageModal .modal-header {
+    border-bottom: none;
+}
+
+#messageModal .modal-footer {
+    border-top: none;
+}
+
+#messageModal .modal-body {
+    padding: 1.5rem;
+}
+
+/* Utility Classes */
+.text-muted-light {
+    color: #6c757d;
+    opacity: 0.8;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #0a58ca 100%);
+}
+
+/* File input styling */
+#csvFileInput {
+    cursor: pointer;
+}
+
+#csvFileInput::-webkit-file-upload-button {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0.3rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#csvFileInput::-webkit-file-upload-button:hover {
+    background: #0a58ca;
+}
+
+/* Dropdown styling */
+#baseStationSelect, #targetPointSelect,
+#regionSelect, #districtSelect {
+    background-color: white;
+    border-radius: 8px;
+    border: 1px solid #ced4da;
+}
+
+#baseStationSelect:focus, #targetPointSelect:focus,
+#regionSelect:focus, #districtSelect:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Badge styling */
+.badge-base {
+    background-color: #ffc107;
+    color: #000;
+}
+
+.badge-parcel {
+    background-color: #17a2b8;
+    color: #fff;
+}
+
+/* Beacon Index PDF Styles */
+#beaconIndexContent {
+    padding: 40px;
+    font-family: Arial, Helvetica, sans-serif;
+    background: white;
+}
+
+.beacon-header h2 {
+    color: #0d6efd;
+    font-weight: 700;
+    margin-bottom: 15px;
+    letter-spacing: 2px;
+}
+
+.beacon-info {
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.beacon-info span {
+    display: inline-block;
+}
+
+#beaconTable {
+    font-size: 11px;
+    margin-top: 15px;
+}
+
+#beaconTable thead th {
+    background-color: #0d6efd;
+    color: white;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px;
+    border: 1px solid #0d6efd;
+}
+
+#beaconTable tbody td {
+    text-align: center;
+    padding: 6px 8px;
+    border: 1px solid #dee2e6;
+}
+
+#beaconTable tbody tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+#beaconTable tbody tr:hover {
+    background-color: #e9ecef;
+}
+
+.beacon-footer {
+    color: #6c757d;
+    font-size: 9px;
+    border-top: 1px solid #dee2e6;
+    padding-top: 10px;
+    margin-top: 20px;
+}
+
+/* Print Plan Data Button */
+#printPlanDataBtn {
+    position: relative;
+}
+
+/* Responsive */
+@media print {
+    #beaconIndexContent {
+        padding: 20px;
+    }
+
+    .beacon-info {
+        font-size: 10px;
+    }
+
+    #beaconTable {
+        font-size: 9px;
+    }
+}
+
+/* Print styles for PDF - CRITICAL FOR OVERFLOW */
+#printContent {
+    font-family: Arial, Helvetica, sans-serif;
+    width: 100% !important;
+    max-width: 100% !important;
+    overflow: hidden !important;
+    box-sizing: border-box;
+}
+
+#printContent h2 {
+    font-size: 20px;
+    margin-bottom: 10px;
+}
+
+#printContent table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed; /* Prevents table from expanding past container */
+    word-wrap: break-word;
+}
+
+#printContent table th {
+    background-color: #0d6efd;
+    color: white;
+    padding: 8px;
+    border: 1px solid #0d6efd;
+    text-align: center;
+    font-size: 11px;
+}
+
+#printContent table td {
+    padding: 6px 8px;
+    border: 1px solid #dee2e6;
+    text-align: center;
+    font-size: 11px;
+    word-wrap: break-word;
+}
+
+#printContent table tr:nth-child(even) {
+    background-color: #f8f9fa;
+}
+
+/* Print option dropdown styling */
+#printOptionSelect {
+    border-radius: 8px 0 0 8px;
+}
+
+#printPlanDataBtn {
+    border-radius: 0 8px 8px 0;
+}
+
+/* Modal print preview */
+#printPreviewModal .modal-body {
+    background-color: #f8f9fa;
+}
+
+#printPreviewModal .modal-body::-webkit-scrollbar {
+    width: 8px;
+}
+
+#printPreviewModal .modal-body::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#printPreviewModal .modal-body::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#printPreviewModal .modal-body::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* ============================================
+   MOBILE RESPONSIVE STYLES
+   ============================================ */
+
+/* Mobile-first adjustments */
+@media (max-width: 767.98px) {
+    /* General */
+    .container-fluid {
+        padding: 0 !important;
+    }
+
+    .main-content {
+        padding: 10px !important;
+    }
+
+    .sidebar {
+        border-left: none !important;
+        border-top: 2px solid #dee2e6 !important;
+        padding: 10px !important;
+        max-height: none !important;
+    }
+
+    /* Cards */
+    .card {
+        border-radius: 8px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .card-header {
+        padding: 8px 12px !important;
+        font-size: 0.85rem !important;
+    }
+
+    .card-body {
+        padding: 10px !important;
+    }
+
+    /* Tables */
+    .table-responsive {
+        border-radius: 6px;
+        border: 1px solid #dee2e6;
+    }
+
+    #coordinateTable,
+    #planTable {
+        font-size: 0.7rem !important;
+    }
+
+    #coordinateTable thead th,
+    #planTable thead th {
+        padding: 4px 4px !important;
+        font-size: 0.65rem !important;
+        white-space: nowrap;
+    }
+
+    #coordinateTable tbody td,
+    #planTable tbody td {
+        padding: 3px 3px !important;
+        font-size: 0.65rem !important;
+        word-break: break-word;
+    }
+
+    #coordinateTable .form-control-sm {
+        font-size: 0.6rem !important;
+        padding: 2px 3px !important;
+        min-width: 40px;
+    }
+
+    /* Result Cards */
+    .result-card {
+        padding: 6px 10px !important;
+        border-radius: 6px !important;
+    }
+
+    .result-card label {
+        font-size: 0.6rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    .result-card h6 {
+        font-size: 0.9rem !important;
+    }
+
+    /* Buttons */
+    .btn {
+        font-size: 0.7rem !important;
+        padding: 4px 8px !important;
+        border-radius: 6px !important;
+    }
+
+    .btn-sm {
+        font-size: 0.65rem !important;
+        padding: 3px 6px !important;
+    }
+
+    /* Labels */
+    .form-label {
+        font-size: 0.7rem !important;
+        margin-bottom: 2px !important;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 0.7rem !important;
+        padding: 4px 6px !important;
+        border-radius: 6px !important;
+    }
+
+    .form-control-sm,
+    .form-select-sm {
+        font-size: 0.65rem !important;
+        padding: 3px 5px !important;
+    }
+
+    /* Badges */
+    .badge {
+        font-size: 0.55rem !important;
+        padding: 2px 6px !important;
+    }
+
+    /* Sidebar */
+    .sidebar h4 {
+        font-size: 0.9rem !important;
+    }
+
+    .sidebar .form-label {
+        font-size: 0.7rem !important;
+    }
+
+    .sidebar .form-control,
+    .sidebar .form-select {
+        font-size: 0.7rem !important;
+        padding: 4px 6px !important;
+    }
+
+    /* File input */
+    #csvFileInput {
+        font-size: 0.6rem !important;
+    }
+
+    #csvFileInput::file-selector-button {
+        font-size: 0.6rem !important;
+        padding: 2px 8px !important;
+    }
+
+    /* Modals */
+    .modal-dialog {
+        margin: 10px !important;
+    }
+
+    .modal-body {
+        padding: 12px !important;
+    }
+
+    .modal-header {
+        padding: 10px 12px !important;
+    }
+
+    .modal-title {
+        font-size: 0.9rem !important;
+    }
+
+    /* Certificates */
+    .certificate {
+        padding: 12px !important;
+    }
+
+    .certificate h2 {
+        font-size: 1.1rem !important;
+    }
+
+    .certificate pre {
+        font-size: 0.6rem !important;
+        padding: 6px !important;
+    }
+
+    /* Toast notifications */
+    .toast {
+        min-width: 200px !important;
+        font-size: 0.7rem !important;
+    }
+
+    /* Input group */
+    .input-group-sm > .form-control,
+    .input-group-sm > .form-select,
+    .input-group-sm > .input-group-text,
+    .input-group-sm > .btn {
+        font-size: 0.65rem !important;
+        padding: 3px 6px !important;
+    }
+
+    /* Hide some labels on mobile */
+    .d-mobile-none {
+        display: none !important;
+    }
+}
+
+/* Small phones (320px - 480px) */
+@media (max-width: 480px) {
+    #coordinateTable,
+    #planTable {
+        font-size: 0.55rem !important;
+    }
+
+    #coordinateTable thead th,
+    #planTable thead th {
+        font-size: 0.5rem !important;
+        padding: 2px 2px !important;
+    }
+
+    #coordinateTable tbody td,
+    #planTable tbody td {
+        font-size: 0.5rem !important;
+        padding: 2px 2px !important;
+    }
+
+    .result-card h6 {
+        font-size: 0.75rem !important;
+    }
+
+    .btn {
+        font-size: 0.6rem !important;
+        padding: 3px 6px !important;
+    }
+
+    .form-label {
+        font-size: 0.6rem !important;
+    }
+
+    .form-control,
+    .form-select {
+        font-size: 0.6rem !important;
+        padding: 3px 4px !important;
+    }
+}
+
+/* Tablets (768px - 992px) */
+@media (min-width: 768px) and (max-width: 991.98px) {
+    .main-content {
+        padding: 15px !important;
+    }
+
+    .sidebar {
+        padding: 15px !important;
+    }
+
+    #coordinateTable,
+    #planTable {
+        font-size: 0.75rem !important;
+    }
+
+    .result-card h6 {
+        font-size: 1rem !important;
+    }
+}
+
+/* Landscape phones */
+@media (max-width: 767.98px) and (orientation: landscape) {
+    .sidebar {
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+    }
+
+    .main-content {
+        max-height: 50vh !important;
+        overflow-y: auto !important;
+    }
+}
+
+/* Touch-friendly adjustments */
+@media (hover: none) and (pointer: coarse) {
+    /* Larger touch targets */
+    .btn,
+    .form-control,
+    .form-select,
+    .remove-coord,
+    #setBaseStationBtn {
+        min-height: 36px !important;
+    }
+
+    /* Remove hover effects on touch devices */
+    .btn:hover {
+        transform: none !important;
+        box-shadow: none !important;
+    }
+
+    .result-card:hover {
+        transform: none !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    }
+}

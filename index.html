@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <title>Land Survey App - EPSG:2136</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/comp-style.css" rel="stylesheet">
+    <style>
+        /* ============================================================
+           Parcel Information placement
+           ------------------------------------------------------------
+           The single #sidebarContent block lives inside the Data
+           Controls card (mobile). On desktop, CSS moves it into the
+           right-hand sidebar using absolute positioning inside the row.
+           No DOM duplication => all IDs and JS bindings stay valid.
+           ============================================================ */
+
+        /* ---------- DESKTOP (>= 768px) ---------- */
+        @media (min-width: 768px) {
+            /* Hide the in-card toggle button on desktop */
+            #parcelInfoMobileToggle {
+                display: none !important;
+            }
+
+            /* Force the form open on desktop */
+            #sidebarContent.collapse {
+                display: block !important;
+                visibility: visible !important;
+            }
+
+            /* Main content takes full width on desktop */
+            .main-content {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: 0 0 100% !important;
+                padding-right: 360px !important; /* leave room for the fixed sidebar */
+                box-sizing: border-box;
+            }
+
+            /* Move the form into a fixed right-hand sidebar.
+               Height is reduced so the bottom of the column is free
+               for the docked polygon preview. */
+            #sidebarContent {
+                position: fixed;
+                top: 0;
+                right: 0;
+                width: 340px;
+                height: calc(100vh - 340px);
+                padding: 1.5rem;
+                background-color: #f8f9fa; /* bg-light */
+                border-left: 1px solid #dee2e6;
+                overflow-y: auto;
+                box-sizing: border-box;
+                z-index: 10;
+            }
+
+            /* Hide the empty placeholder column on desktop */
+            .sidebar-column {
+                display: none !important;
+            }
+
+            /* Dock the computed polygon preview in the bottom-right
+               corner of the page, directly below the text fields. */
+            #polygonPreviewCard {
+                position: fixed;
+                right: 0;
+                bottom: 0;
+                width: 340px;
+                height: 340px;
+                margin: 0 !important;
+                z-index: 10;
+                border-left: 1px solid #dee2e6;
+                border-top: 1px solid #dee2e6;
+                border-radius: 0;
+                display: flex;
+                flex-direction: column;
+            }
+
+            #polygonPreviewCard .card-body {
+                flex: 1 1 auto;
+                overflow: hidden;
+            }
+
+            #polygonPreviewCard .polygon-preview,
+            #polygonPreviewCard #polygonPreviewSvg {
+                min-height: 200px;
+                height: 200px;
+            }
+        }
+
+        /* ---------- MOBILE ONLY ---------- */
+        @media (max-width: 767.98px) {
+            /* Hide the empty desktop sidebar column on mobile */
+            .sidebar-column {
+                display: none !important;
+            }
+        }
+
+        /* Uppercase the Regional Number field visually */
+        #survNumber {
+            text-transform: uppercase;
+        }
+        
+        /* ---------- COMPUTED POLYGON PREVIEW ---------- */
+        .polygon-preview-card {
+            overflow: hidden;
+        }
+
+        .polygon-preview {
+            position: relative;
+            min-height: 360px;
+            border: 1px solid #dee2e6;
+            border-radius: .375rem;
+            background: #f8fafc;
+            overflow: hidden;
+        }
+
+        #polygonPreviewSvg {
+            display: block;
+            width: 100%;
+            height: 360px;
+        }
+
+        .polygon-preview-empty {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            text-align: center;
+            color: #6c757d;
+            background: rgba(248, 250, 252, .92);
+        }
+
+        .polygon-preview-empty.is-hidden {
+            display: none;
+        }
+
+        .polygon-preview-legend {
+            font-size: .8rem;
+        }
+
+        @media (max-width: 575.98px) {
+            .polygon-preview,
+            #polygonPreviewSvg {
+                min-height: 260px;
+                height: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid vh-100">
+        <div class="row h-100 position-relative">
+
+            <!-- ============================================================
+                 MAIN CONTENT AREA
+                 ============================================================ -->
+            <div class="col-12 p-3 p-md-4 main-content">
+
+                <!-- Mobile Header -->
+                <div class="d-block d-md-none text-center mb-3">
+                    <h5 class="mb-0"><i class="fas fa-map-marked-alt text-primary"></i> Land Parcel</h5>
+                    <small class="text-muted">EPSG:2136 - Accra Ghana</small>
+                </div>
+
+                <h1 class="mb-4 d-none d-md-block"><i class="fas fa-map-marked-alt text-primary"></i> Land Parcel Computations</h1>
+                <p class="text-muted d-none d-md-block">Coordinates System: <strong>EPSG:2136 - Accra Ghana National Grid</strong></p>
+
+                <!-- ============================================================
+                     DATA CONTROLS CARD
+                     ============================================================ -->
+                <div class="card mb-3 mb-md-4">
+                    <div class="card-header bg-primary text-white py-2 py-md-3">
+                        <i class="fas fa-cogs me-2"></i> Data Controls
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+
+                        <!-- ====================================================
+                             PARCEL INFORMATION TOGGLE (mobile only)
+                             ==================================================== -->
+                        <div id="parcelInfoMobileToggle" class="d-block d-md-none mb-3">
+                            <button class="btn btn-outline-primary btn-sm w-100" type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#sidebarContent"
+                                    aria-expanded="false"
+                                    aria-controls="sidebarContent">
+                                <i class="fas fa-chevron-down"></i> Parcel Information <i class="fas fa-chevron-down"></i>
+                            </button>
+                        </div>
+
+                        <!-- ====================================================
+                             PARCEL INFORMATION FORM (single instance)
+                             Lives here in the DOM. On desktop CSS moves it
+                             into the right-hand sidebar. On mobile it stays
+                             right above the Compute Plan button.
+                             ==================================================== -->
+                        <div id="sidebarContent" class="collapse d-md-block mb-3">
+                            <h4 class="d-none d-md-block"><i class="fas fa-file-alt text-primary me-2"></i> Parcel Information</h4>
+                            <hr class="d-none d-md-block">
+
+                            <div class="mb-2 mb-md-3">
+                                <label for="ownerName" class="form-label fw-bold small">Owner's Name</label>
+                                <input type="text" class="form-control form-control-sm" id="ownerName" placeholder="Enter owner's name">
+                            </div>
+
+                            <div class="mb-2 mb-md-3">
+                                <label for="locality" class="form-label fw-bold small">Locality</label>
+                                <input type="text" class="form-control form-control-sm" id="locality" placeholder="Enter locality">
+                            </div>
+
+                            <div class="mb-2 mb-md-3">
+                                <label for="regionSelect" class="form-label fw-bold small">Region</label>
+                                <select class="form-select form-select-sm" id="regionSelect">
+                                    <option value="">Select Region</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-2 mb-md-3">
+                                <label for="districtSelect" class="form-label fw-bold small">District</label>
+                                <select class="form-select form-select-sm" id="districtSelect">
+                                    <option value="">Select District</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-2 mb-md-3">
+                                <label for="surveyorName" class="form-label fw-bold small">Licensed Surveyor</label>
+                                <input type="text" class="form-control form-control-sm" id="surveyorName" placeholder="Surveyor's name">
+                            </div>
+
+                            <div class="mb-2 mb-md-3">
+                                <label for="licenseNumber" class="form-label fw-bold small">License Number</label>
+                                <input type="number" class="form-control form-control-sm" id="licenseNumber" placeholder="e.g., 12345" min="1" inputmode="numeric">
+                            </div>
+
+                            <div class="mb-2 mb-md-3">
+                                <label for="survNumber" class="form-label fw-bold small">Regional Number</label>
+                                <input type="text" class="form-control form-control-sm" id="survNumber" placeholder="e.g., 800">
+                            </div>
+
+                            <hr class="d-none d-md-block">
+                        </div>
+
+                        <!-- Row 1: CSV, Base Station, Target Point, Compute Plan -->
+                        <div class="row g-2 g-md-3">
+                            <div class="col-12 col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <input type="file" class="form-control form-control-sm" id="csvFileInput" accept=".csv">
+                                    <button class="btn btn-success btn-sm" id="loadCsvBtn">
+                                        <i class="fas fa-upload"></i> Load
+                                    </button>
+                                </div>
+                                <div class="form-text small d-none d-md-block">
+                                    <i class="fas fa-info-circle"></i> CSV with columns: id, x, y
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label for="baseStationSelect" class="form-label fw-bold small">Base Station</label>
+                                <select class="form-select form-select-sm" id="baseStationSelect">
+                                    <option value="">Select</option>
+                                </select>
+                            </div>
+                            <div class="col-6 col-md-3">
+                                <label for="targetPointSelect" class="form-label fw-bold small">Target Point</label>
+                                <select class="form-select form-select-sm" id="targetPointSelect">
+                                    <option value="">Select</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-2 d-flex align-items-end">
+                                <button class="btn btn-warning btn-sm w-100" id="computePlanBtn">
+                                    <i class="fas fa-calculator"></i> Compute Plan
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Row 2: Clear / Print -->
+                        <div class="row mt-2 mt-md-3 g-2 g-md-3">
+                            <div class="col-6 col-md-4">
+                                <button class="btn btn-secondary btn-sm w-100" id="clearDataBtn">
+                                    <i class="fas fa-eraser"></i> Clear All
+                                </button>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <div class="input-group input-group-sm">
+                                    <select class="form-select form-select-sm" id="printOptionSelect">
+                                        <option value="beacon">Beacon Index</option>
+                                        <option value="plandata">Plan Data</option>
+                                        <option value="area">Area Summary</option>
+                                        <option value="all">All (Complete)</option>
+                                    </select>
+                                    <button class="btn btn-primary btn-sm" id="printPlanDataBtn">
+                                        <i class="fas fa-print"></i> Preview
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+                <!-- ============================================================
+                     END DATA CONTROLS CARD
+                     ============================================================ -->
+
+                <!-- Computed Polygon Preview -->
+                <div class="card mb-3 mb-md-4 polygon-preview-card" id="polygonPreviewCard">
+                    <div class="card-header bg-dark text-white py-2 py-md-3 d-flex align-items-center justify-content-between">
+                        <span>
+                            <i class="fas fa-draw-polygon me-2"></i>
+                            Computed Polygon
+                        </span>
+                        <span class="badge bg-light text-dark" id="polygonPointCount">0 points</span>
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+                        <div class="polygon-preview" aria-label="Computed polygon preview">
+                            <svg id="polygonPreviewSvg" viewBox="0 0 800 360" role="img"
+                                 aria-labelledby="polygonPreviewTitle polygonPreviewDescription">
+                                <title id="polygonPreviewTitle">Computed land parcel polygon</title>
+                                <desc id="polygonPreviewDescription">
+                                    A scaled preview of the computed parcel coordinates.
+                                </desc>
+                            </svg>
+                            <div class="polygon-preview-empty" id="polygonPreviewEmpty">
+                                <div>
+                                    <i class="fas fa-map-marked-alt fa-2x mb-2 text-secondary"></i>
+                                    <div>Compute a plan to display the polygon here.</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="polygon-preview-legend text-muted mt-2">
+                            <i class="fas fa-info-circle me-1"></i>
+                            The polygon is scaled to fit the preview window. Beacon labels are shown at each computed point.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coordinate Data Table -->
+                <div class="card mb-3 mb-md-4">
+                    <div class="card-header bg-info text-white py-2 py-md-3 d-flex flex-wrap align-items-center">
+                        <i class="fas fa-table me-2"></i>
+                        <span class="d-none d-sm-inline">Coordinate Data</span>
+                        <span class="d-inline d-sm-none">Coords</span>
+                        <span class="badge bg-light text-dark ms-2" id="coordinateCount">0</span>
+                        <span class="badge bg-warning text-dark ms-2" id="baseStationBadge">No base</span>
+                    </div>
+                    <div class="card-body p-1 p-md-3">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm" id="coordinateTable">
+                                <thead>
+                                    <tr>
+                                        <th class="small">Beacon</th>
+                                        <th class="small d-none d-sm-table-cell">X (Northing)</th>
+                                        <th class="small d-none d-sm-table-cell">Y (Easting)</th>
+                                        <th class="small d-table-cell d-sm-none">X</th>
+                                        <th class="small d-table-cell d-sm-none">Y</th>
+                                        <th class="small">Type</th>
+                                        <th class="small">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="coordinatesBody">
+                                    <!-- Empty by default, populated when CSV is loaded -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row mt-2">
+                            <div class="col-7 col-md-6">
+                                <button class="btn btn-primary btn-sm w-100" id="setBaseStationBtn">
+                                    <i class="fas fa-flag-checkered"></i> <span class="d-none d-sm-inline">Set as Base</span><span class="d-inline d-sm-none">Set Base</span>
+                                </button>
+                            </div>
+                            <div class="col-5 col-md-6 text-end">
+                                <span id="rowCountDisplay" class="text-muted small">No data</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plan Data Table (Bearing & Distance) -->
+                <div class="card mb-3 mb-md-4" id="planDataCard" style="display: none;">
+                    <div class="card-header bg-success text-white py-2 py-md-3 d-flex flex-wrap align-items-center">
+                        <i class="fas fa-route me-2"></i>
+                        <span class="d-none d-sm-inline">Plan Data</span>
+                        <span class="d-inline d-sm-none">Plan</span>
+                        <span class="badge bg-light text-dark ms-2" id="planDataCount">0</span>
+                    </div>
+                    <div class="card-body p-1 p-md-3">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-hover table-sm" id="planTable">
+                                <thead>
+                                    <tr>
+                                        <th class="small">From</th>
+                                        <th class="small d-none d-md-table-cell">X</th>
+                                        <th class="small d-none d-md-table-cell">Y</th>
+                                        <th class="small d-table-cell d-md-none">X</th>
+                                        <th class="small d-table-cell d-md-none">Y</th>
+                                        <th class="small">Bearing</th>
+                                        <th class="small">Dist</th>
+                                        <th class="small">To</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="planBody">
+                                    <!-- Dynamic content -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Results Section -->
+                <div class="card">
+                    <div class="card-header bg-success text-white py-2 py-md-3">
+                        <i class="fas fa-calculator me-2"></i> Results
+                    </div>
+                    <div class="card-body p-2 p-md-3">
+                        <div class="row g-2 g-md-3">
+                            <div class="col-6 col-md-3 mb-2 mb-md-3">
+                                <div class="result-card p-2">
+                                    <label class="text-muted small"><i class="fas fa-arrows-alt-h"></i> Perimeter</label>
+                                    <h6 class="mb-0" id="perimeter">0.00 ft</h6>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 mb-2 mb-md-3">
+                                <div class="result-card p-2">
+                                    <label class="text-muted small"><i class="fas fa-vector-square"></i> Acres</label>
+                                    <h6 class="mb-0" id="areaAcres">0.00</h6>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 mb-2 mb-md-3">
+                                <div class="result-card p-2">
+                                    <label class="text-muted small"><i class="fas fa-vector-square"></i> Hectares</label>
+                                    <h6 class="mb-0" id="areaHa">0.00</h6>
+                                </div>
+                            </div>
+                            <div class="col-6 col-md-3 mb-2 mb-md-3">
+                                <div class="result-card p-2">
+                                    <label class="text-muted small"><i class="fas fa-map-pin"></i> Points</label>
+                                    <h6 class="mb-0" id="totalPoints">0</h6>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-2">
+                            <button class="btn btn-primary btn-sm w-100" id="calculateBtn">
+                                <i class="fas fa-sync"></i> Recalculate
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================
+                 SIDEBAR COLUMN (desktop placeholder)
+                 The actual Parcel Information form is positioned over this
+                 column via CSS on desktop. On mobile this column is hidden.
+                 ============================================================ -->
+            <div class="sidebar-column">
+                <!-- Empty: #sidebarContent is fixed-positioned on desktop -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div class="modal fade" id="messageModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-sm">
+            <div class="modal-content">
+                <div class="modal-header" id="messageModalHeader">
+                    <h6 class="modal-title" id="messageModalTitle">
+                        <i class="fas fa-info-circle me-2" id="messageIcon"></i>
+                        <span id="messageTitle">Notification</span>
+                    </h6>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body" id="messageModalBody">
+                    <p id="messageText" class="small mb-0">Message content goes here.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" id="messageModalCloseBtn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden PDF Content Template -->
+    <div id="pdfContentTemplate" style="display: none;">
+        <div id="beaconIndexContent">
+            <div class="beacon-header text-center">
+                <h2>BEACON INDEX</h2>
+                <hr>
+                <div class="beacon-info">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span><strong>Client:</strong> <span id="pdfOwnerName"></span></span>
+                        <span><strong>Survey No:</strong> <span id="pdfSurveyNumber"></span></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span><strong>Locality:</strong> <span id="pdfLocality"></span></span>
+                        <span><strong>Surveyor:</strong> <span id="pdfSurveyor"></span></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span><strong>Region:</strong> <span id="pdfRegion"></span></span>
+                        <span><strong>License No:</strong> <span id="pdfLicense"></span></span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span><strong>District:</strong> <span id="pdfDistrict"></span></span>
+                        <span><strong>Date:</strong> <span id="pdfDate"></span></span>
+                    </div>
+                </div>
+                <hr>
+            </div>
+            <div class="beacon-table">
+                <table class="table table-bordered" id="beaconTable">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>X (Northing)</th>
+                            <th>Y (Easting)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="beaconTableBody">
+                    </tbody>
+                </table>
+            </div>
+            <div class="beacon-footer text-center" style="margin-top: 20px; font-size: 10px;">
+                <p>Generated on: <span id="pdfGeneratedDate"></span> | Coordinate System: EPSG:2136 - Accra Ghana National Grid</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================
+         REGION / DISTRICT DATA
+         ----------------------------------------------------------------
+         The full 16-region dataset is exposed on window.regionsData.
+         This is the ONLY change: the data source now contains every
+         region instead of just five. The dropdown-population logic in
+         js/app.js is completely untouched.
+         ================================================================ -->
+    <script>
+        window.ghanaRegions = [
+            {
+              "name": "Ahafo Region",
+              "capital": "Goaso",
+              "districts": [
+                "Asunafo North Municipal",
+                "Asunafo South District",
+                "Asutifi North District",
+                "Asutifi South District",
+                "Tano North Municipal",
+                "Tano South Municipal"
+              ]
+            },
+            {
+              "name": "Ashanti Region",
+              "capital": "Kumasi",
+              "districts": [
+                "Adansi Asokwa District",
+                "Adansi North District",
+                "Adansi South District",
+                "Afigya Kwabre North District",
+                "Afigya Kwabre South District",
+                "Afigya Sekyere District",
+                "Ahafo Ano North Municipal",
+                "Ahafo Ano South District",
+                "Amansie Central District",
+                "Amansie West District",
+                "Asante Akim Central Municipal",
+                "Asante Akim North Municipal",
+                "Asante Akim South Municipal",
+                "Asokwa Municipal",
+                "Atwima Kwanwoma District",
+                "Atwima Mponua District",
+                "Atwima Nwabiagya Municipal",
+                "Atwima Nwabiagya North District",
+                "Bekwai Municipal",
+                "Bosome Freho District",
+                "Bosomtwe District",
+                "Ejisu Municipal",
+                "Ejura Sekyedumase Municipal",
+                "Juaben Municipal",
+                "Kumasi Metropolitan",
+                "Kwabre East Municipal",
+                "Mampong Municipal",
+                "Obuasi East District",
+                "Obuasi Municipal",
+                "Offinso Municipal",
+                "Offinso North District",
+                "Oforikrom Municipal",
+                "Old Tafo Municipal",
+                "Sekyere Afram Plains District",
+                "Sekyere Central District",
+                "Sekyere East District",
+                "Sekyere Kumawu District",
+                "Sekyere South District"
+              ]
+            },
+            {
+              "name": "Bono East Region",
+              "capital": "Techiman",
+              "districts": [
+                "Atebubu-Amantin Municipal",
+                "Kintampo North Municipal",
+                "Kintampo South District",
+                "Nkoranza Municipal",
+                "Nkoranza North District",
+                "Pru East District",
+                "Pru West District",
+                "Sene East District",
+                "Sene West District",
+                "Techiman Municipal",
+                "Techiman North District"
+              ]
+            },
+            {
+              "name": "Bono Region",
+              "capital": "Sunyani",
+              "districts": [
+                "Banda District",
+                "Berekum Municipal",
+                "Berekum West District",
+                "Dormaa Central Municipal",
+                "Dormaa East District",
+                "Dormaa West District",
+                "Jaman North District",
+                "Jaman South Municipal",
+                "Sunyani Municipal",
+                "Sunyani West District",
+                "Tain District",
+                "Wenchi Municipal"
+              ]
+            },
+            {
+              "name": "Central Region",
+              "capital": "Cape Coast",
+              "districts": [
+                "Abura-Asebu-Kwamankese District",
+                "Agona East District",
+                "Agona West Municipal",
+                "Ajumako-Enyan-Essiam District",
+                "Asikuma-Odoben-Brakwa District",
+                "Assin Central Municipal",
+                "Assin Fosu Municipal",
+                "Assin North District",
+                "Assin South District",
+                "Awutu Senya East Municipal",
+                "Awutu Senya West District",
+                "Cape Coast Metropolitan",
+                "Effutu Municipal",
+                "Ekumfi District",
+                "Gomoa Central District",
+                "Gomoa East District",
+                "Gomoa West District",
+                "Komenda-Edina-Eguafo-Abirem Municipal",
+                "Mfantseman Municipal",
+                "Twifo-Ati Morkwa District",
+                "Twifo-Heman Lower Denkyira District",
+                "Upper Denkyira East Municipal",
+                "Upper Denkyira West District"
+              ]
+            },
+            {
+              "name": "Eastern Region",
+              "capital": "Koforidua",
+              "districts": [
+                "Achiase District",
+                "Akuapem North Municipal",
+                "Akuapem South District",
+                "Akyemansa District",
+                "Asene Manso Akroso District",
+                "Asuogyaman District",
+                "Atiwa East District",
+                "Atiwa West District",
+                "Ayensuano District",
+                "Birim Central Municipal",
+                "Birim North District",
+                "Birim South District",
+                "Denkyembour District",
+                "Fanteakwa North District",
+                "Fanteakwa South District",
+                "Kwaebibirem Municipal",
+                "Kwahu Afram Plains North District",
+                "Kwahu Afram Plains South District",
+                "Kwahu East District",
+                "Kwahu South District",
+                "Kwahu West Municipal",
+                "Lower Manya Krobo Municipal",
+                "New Juaben North Municipal",
+                "New Juaben South Municipal",
+                "Nkawkaw Municipal",
+                "Nsawam-Adoagyiri Municipal",
+                "Okaikwei South Municipal",
+                "Okere District",
+                "Suhum Municipal",
+                "Upper Manya Krobo District",
+                "Upper West Akim District",
+                "West Akim Municipal",
+                "Yilo Krobo Municipal"
+              ]
+            },
+            {
+              "name": "Greater Accra Region",
+              "capital": "Accra",
+              "districts": [
+                "Ablekuma Central Municipal",
+                "Ablekuma North Municipal",
+                "Ablekuma West Municipal",
+                "Accra Metropolitan",
+                "Ada East District",
+                "Ada West District",
+                "Adenta Municipal",
+                "Ashaiman Municipal",
+                "Ayawaso Central Municipal",
+                "Ayawaso East Municipal",
+                "Ayawaso North Municipal",
+                "Ayawaso West Municipal",
+                "Ga Central Municipal",
+                "Ga East Municipal",
+                "Ga North Municipal",
+                "Ga South Municipal",
+                "Ga West Municipal",
+                "Korle Klottey Municipal",
+                "Kpone Katamanso Municipal",
+                "Krowor Municipal",
+                "La Dade Kotopon Municipal",
+                "La Nkwantanang Madina Municipal",
+                "Ledzokuku Municipal",
+                "Ningo Prampram District",
+                "Okaikwei North Municipal",
+                "Shai Osudoku District",
+                "Tema Metropolitan",
+                "Tema West District",
+                "Weija Gbawe Municipal"
+              ]
+            },
+            {
+              "name": "North East Region",
+              "capital": "Nalerigu",
+              "districts": [
+                "Bunkpurugu Nyankpanduri District",
+                "Chereponi District",
+                "East Mamprusi Municipal",
+                "Garu District",
+                "Mamprugu Moagduri District",
+                "Nalerigu District",
+                "West Mamprusi Municipal",
+                "Yunyoo-Nasuan District"
+              ]
+            },
+            {
+              "name": "Northern Region",
+              "capital": "Tamale",
+              "districts": [
+                "Gushegu Municipal",
+                "Karaga District",
+                "Kpandai District",
+                "Mion District",
+                "Nanton District",
+                "Nanumba North Municipal",
+                "Nanumba South District",
+                "Sagnarigu Municipal",
+                "Saboba District",
+                "Tamale Metropolitan",
+                "Tatale Sanguli District",
+                "Tolon District",
+                "Yendi Municipal",
+                "Zabzugu District"
+              ]
+            },
+            {
+              "name": "Oti Region",
+              "capital": "Dambai",
+              "districts": [
+                "Biakoye District",
+                "Jasikan District",
+                "Kadjebi District",
+                "Krachi East Municipal",
+                "Krachi Nchumuru District",
+                "Krachi West District",
+                "Nkwanta Municipal",
+                "Nkwanta North District",
+                "Nkwanta South District"
+              ]
+            },
+            {
+              "name": "Savannah Region",
+              "capital": "Damongo",
+              "districts": [
+                "Bole District",
+                "Central Gonja District",
+                "East Gonja Municipal",
+                "North East Gonja District",
+                "North Gonja District",
+                "Sawla-Tuna-Kalba District",
+                "West Gonja Municipal",
+                "West Gonja North District"
+              ]
+            },
+            {
+              "name": "Upper East Region",
+              "capital": "Bolgatanga",
+              "districts": [
+                "Bawku Municipal",
+                "Bawku West District",
+                "Binduri District",
+                "Bolgatanga East District",
+                "Bolgatanga Municipal",
+                "Bongo District",
+                "Builsa North Municipal",
+                "Builsa South District",
+                "Garu-Tempane District",
+                "Kassena-Nankana Municipal",
+                "Kassena-Nankana West District",
+                "Nabdam District",
+                "Pusiga District",
+                "Talensi District",
+                "Tempane District"
+              ]
+            },
+            {
+              "name": "Upper West Region",
+              "capital": "Wa",
+              "districts": [
+                "Daffiama-Bussie-Issa District",
+                "Jirapa Municipal",
+                "Lambussie Karni District",
+                "Lawra Municipal",
+                "Nadowli-Kaleo District",
+                "Nandom Municipal",
+                "Sissala East Municipal",
+                "Sissala West District",
+                "Wa East District",
+                "Wa Municipal",
+                "Wa West District"
+              ]
+            },
+            {
+              "name": "Volta Region",
+              "capital": "Ho",
+              "districts": [
+                "Adaklu District",
+                "Afadjato South District",
+                "Agotime Ziope District",
+                "Akatsi North District",
+                "Akatsi South Municipal",
+                "Anloga District",
+                "Central Tongu District",
+                "Ho Municipal",
+                "Ho West District",
+                "Hohoe Municipal",
+                "Keta Municipal",
+                "Ketu North Municipal",
+                "Ketu South Municipal",
+                "Kpando Municipal",
+                "North Dayi District",
+                "North Tongu District",
+                "South Dayi District",
+                "South Tongu District"
+              ]
+            },
+            {
+              "name": "Western North Region",
+              "capital": "Sefwi Wiawso",
+              "districts": [
+                "Aowin Municipal",
+                "Bia East District",
+                "Bia West District",
+                "Bibiani-Anhwiaso-Bekwai Municipal",
+                "Bodi District",
+                "Juabeso District",
+                "Sefwi Akontombra District",
+                "Sefwi Wiawso Municipal",
+                "Suaman District"
+              ]
+            },
+            {
+              "name": "Western Region",
+              "capital": "Sekondi-Takoradi",
+              "districts": [
+                "Ahanta West Municipal",
+                "Amenfi Central District",
+                "Amenfi West Municipal",
+                "Effia-Kwesimintsim Municipal",
+                "Ellembelle District",
+                "Jomoro Municipal",
+                "Mpohor District",
+                "Nzema East Municipal",
+                "Prestea-Huni Valley Municipal",
+                "Sekondi-Takoradi Metropolitan",
+                "Shama District",
+                "Tarkwa-Nsuaem Municipal",
+                "Wassa Amenfi East Municipal",
+                "Wassa East District"
+              ]
+            }
+        ];
+    </script>
+
+    <!-- Libraries for PDF Generation -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <!--script src="js/regions-districts.js"></script-->
+    <script src="js/coordinate-converter.js"></script>
+    <script src="js/survey-calculations.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Uppercase Regional Number field as the user types -->
+    <script>
+        (function () {
+            var survNumberInput = document.getElementById('survNumber');
+            if (!survNumberInput) return;
+
+            survNumberInput.addEventListener('input', function () {
+                var start = this.selectionStart;
+                var end = this.selectionEnd;
+                this.value = this.value.toUpperCase();
+                this.setSelectionRange(start, end);
+            });
+        })();
+    </script>
+
+    <!-- Computed polygon preview -->
+    <script>
+        (function () {
+            var svg = document.getElementById('polygonPreviewSvg');
+            var emptyState = document.getElementById('polygonPreviewEmpty');
+            var pointCount = document.getElementById('polygonPointCount');
+            var coordinatesBody = document.getElementById('coordinatesBody');
+            var planBody = document.getElementById('planBody');
+
+            if (!svg || !coordinatesBody || !planBody) return;
+
+            var SVG_NS = 'http://www.w3.org/2000/svg';
+            var viewBox = { width: 800, height: 360 };
+
+            function createSvgElement(tagName, attributes) {
+                var element = document.createElementNS(SVG_NS, tagName);
+                Object.keys(attributes).forEach(function (key) {
+                    element.setAttribute(key, attributes[key]);
+                });
+                return element;
+            }
+
+            function clearPreview() {
+                while (svg.lastChild) {
+                    svg.removeChild(svg.lastChild);
+                }
+            }
+
+            function getNumericValue(value) {
+                if (value === null || value === undefined || value === '') return null;
+                var number = Number(String(value).replace(/,/g, '').trim());
+                return Number.isFinite(number) ? number : null;
+            }
+
+            function readPointsFromTable(tableBody, rowFormat) {
+                return Array.from(tableBody.querySelectorAll('tr')).map(function (row) {
+                    var cells = Array.from(row.querySelectorAll('td')).map(function (cell) {
+                        return cell.textContent.trim();
+                    });
+
+                    if (cells.length < 3) return null;
+
+                    var xIndex = rowFormat === 'plan' ? 1 : 1;
+                    var yIndex = rowFormat === 'plan' ? 2 : 2;
+                    var x = getNumericValue(cells[xIndex]);
+                    var y = getNumericValue(cells[yIndex]);
+
+                    if (x === null || y === null) return null;
+
+                    return {
+                        id: cells[0] || ('P' + (Math.random() * 1000000).toFixed(0)),
+                        x: x,
+                        y: y
+                    };
+                }).filter(Boolean);
+            }
+
+            function normalizePoints(points) {
+                var seen = {};
+                return points.filter(function (point) {
+                    var key = point.x + ':' + point.y;
+                    if (seen[key]) return false;
+                    seen[key] = true;
+                    return true;
+                });
+            }
+
+            function drawPolygon(points) {
+                clearPreview();
+
+                if (points.length < 3) {
+                    emptyState.classList.remove('is-hidden');
+                    pointCount.textContent = points.length + (points.length === 1 ? ' point' : ' points');
+                    return;
+                }
+
+                emptyState.classList.add('is-hidden');
+                pointCount.textContent = points.length + ' points';
+
+                var padding = { top: 28, right: 36, bottom: 34, left: 48 };
+                var drawableWidth = viewBox.width - padding.left - padding.right;
+                var drawableHeight = viewBox.height - padding.top - padding.bottom;
+                /*
+                 * Display axes are intentionally interchanged:
+                 * - horizontal axis = Y / Easting
+                 * - vertical axis = X / Northing
+                 */
+                var displayXs = points.map(function (point) { return point.y; });
+                var displayYs = points.map(function (point) { return point.x; });
+                var minDisplayX = Math.min.apply(null, displayXs);
+                var maxDisplayX = Math.max.apply(null, displayXs);
+                var minDisplayY = Math.min.apply(null, displayYs);
+                var maxDisplayY = Math.max.apply(null, displayYs);
+                var displayXRange = maxDisplayX - minDisplayX || 1;
+                var displayYRange = maxDisplayY - minDisplayY || 1;
+                var scale = Math.min(drawableWidth / displayXRange, drawableHeight / displayYRange);
+                var offsetX = padding.left + (drawableWidth - displayXRange * scale) / 2;
+
+                function project(point) {
+                    return {
+                        x: offsetX + (point.y - minDisplayX) * scale,
+                        y: viewBox.height - padding.bottom - (point.x - minDisplayY) * scale
+                    };
+                }
+
+                var gridGroup = createSvgElement('g', {
+                    'stroke': '#e2e8f0',
+                    'stroke-width': '1'
+                });
+                for (var i = 1; i < 5; i++) {
+                    var gridX = padding.left + drawableWidth * i / 5;
+                    var gridY = padding.top + drawableHeight * i / 5;
+                    gridGroup.appendChild(createSvgElement('line', {
+                        x1: gridX, y1: padding.top, x2: gridX, y2: viewBox.height - padding.bottom
+                    }));
+                    gridGroup.appendChild(createSvgElement('line', {
+                        x1: padding.left, y1: gridY, x2: viewBox.width - padding.right, y2: gridY
+                    }));
+                }
+                svg.appendChild(gridGroup);
+
+                var axisGroup = createSvgElement('g', {
+                    'stroke': '#94a3b8',
+                    'stroke-width': '1.5'
+                });
+                axisGroup.appendChild(createSvgElement('line', {
+                    x1: padding.left, y1: viewBox.height - padding.bottom,
+                    x2: viewBox.width - padding.right, y2: viewBox.height - padding.bottom
+                }));
+                axisGroup.appendChild(createSvgElement('line', {
+                    x1: padding.left, y1: padding.top, x2: padding.left, y2: viewBox.height - padding.bottom
+                }));
+                svg.appendChild(axisGroup);
+
+                var projected = points.map(project);
+                var polygonPoints = projected.map(function (point) {
+                    return point.x + ',' + point.y;
+                }).join(' ');
+
+                svg.appendChild(createSvgElement('polygon', {
+                    points: polygonPoints,
+                    fill: 'rgba(13, 110, 253, .22)',
+                    stroke: '#0d6efd',
+                    'stroke-width': '3',
+                    'stroke-linejoin': 'round'
+                }));
+
+                projected.forEach(function (point, index) {
+                    /* --- reduced point radius (was '5', now '2.5') --- */
+                    svg.appendChild(createSvgElement('circle', {
+                        cx: point.x,
+                        cy: point.y,
+                        r: '2.5',
+                        fill: '#fff',
+                        stroke: '#dc3545',
+                        'stroke-width': '1.5'
+                    }));
+
+                    /* --- reduced label font size (was '12', now '6') --- */
+                    var label = createSvgElement('text', {
+                        x: point.x + 4,
+                        y: point.y - 4,
+                        fill: '#1e293b',
+                        'font-size': '6',
+                        'font-weight': '600'
+                    });
+                    label.textContent = points[index].id;
+                    svg.appendChild(label);
+                });
+
+                var axisLabelX = createSvgElement('text', {
+                    x: viewBox.width / 2,
+                    y: viewBox.height - 8,
+                    'text-anchor': 'middle',
+                    fill: '#64748b',
+                    'font-size': '11'
+                });
+                axisLabelX.textContent = 'Y / Easting';
+                svg.appendChild(axisLabelX);
+
+                var axisLabelY = createSvgElement('text', {
+                    x: 14,
+                    y: viewBox.height / 2,
+                    'text-anchor': 'middle',
+                    fill: '#64748b',
+                    'font-size': '11',
+                    transform: 'rotate(-90 14 ' + viewBox.height / 2 + ')'
+                });
+                axisLabelY.textContent = 'X / Northing';
+                svg.appendChild(axisLabelY);
+            }
+
+            function refreshPreview() {
+                /*
+                 * Computed coordinates are normally written to the plan table.
+                 * Fall back to the coordinate table when a plan has not yet
+                 * been generated. In either case, the first row is the
+                 * baseline station and must not be drawn as part of the parcel.
+                 */
+                var planPoints = readPointsFromTable(planBody, 'plan');
+                var coordinatePoints = readPointsFromTable(coordinatesBody, 'coordinates');
+                var sourcePoints = planPoints.length ? planPoints : coordinatePoints;
+                var points = normalizePoints(sourcePoints.slice(1));
+                drawPolygon(points);
+            }
+
+            var observer = new MutationObserver(refreshPreview);
+            observer.observe(coordinatesBody, { childList: true, subtree: true, characterData: true });
+            observer.observe(planBody, { childList: true, subtree: true, characterData: true });
+
+            ['computePlanBtn', 'calculateBtn', 'clearDataBtn', 'loadCsvBtn'].forEach(function (id) {
+                var button = document.getElementById(id);
+                if (button) button.addEventListener('click', function () {
+                    window.setTimeout(refreshPreview, 0);
+                });
+            });
+
+            refreshPreview();
+        })();
+    </script>
+</body>
+</html>
